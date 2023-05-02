@@ -15,10 +15,9 @@ pub fn handle_on_received_cw20_funds_msg(
     }
     let mut response = Response::new();
     let token_contract = info.sender;
-    if !is_contract_registered(&deps, &token_contract) {
-        ensure_sufficient_create_denom_balance(&deps, &env)?;
-        response = response.add_message(register_contract_and_get_message(deps, &env, &token_contract)?);
-    }
+    is_contract_registered(&deps, token_contract)?;
+    ensure_sufficient_create_denom_balance(&deps, &env)?;
+    response = response.add_message(register_contract_and_get_message(deps, &env, &token_contract)?);
     let master = env.contract.address;
 
     let denom = get_denom(&master, &token_contract);

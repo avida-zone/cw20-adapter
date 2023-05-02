@@ -30,3 +30,4 @@ thiserror = { workspace = true }
 cw-item-set = { workspace = true }
 injective-cosmwasm = { workspace = true }
 serde = { workspace = true }
+avida-verifier = { git = "https://github.com/avida-zone/cw-contracts-hackathon23", rev = "849f85c" }

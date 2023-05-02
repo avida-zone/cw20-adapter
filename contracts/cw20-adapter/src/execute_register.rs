@@ -1,5 +1,6 @@
-use crate::common::{is_contract_registered, query_denom_creation_fee, register_contract_and_get_message};
+use crate::common::{get_create_denom_message, is_contract_registered, query_denom_creation_fee};
 use crate::error::ContractError;
+use crate::state::LAUNCHPAD;
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response};
 use injective_cosmwasm::{InjectiveMsgWrapper, InjectiveQueryWrapper};
 use std::cmp::Ordering;
@@ -10,9 +11,13 @@ pub fn handle_register_msg(
     info: MessageInfo,
     addr: Addr,
 ) -> Result<Response<InjectiveMsgWrapper>, ContractError> {
-    if is_contract_registered(&deps, &addr) {
-        return Err(ContractError::ContractAlreadyRegistered);
+    is_contract_registered(&deps, addr)?;
+
+    let launchpad = LAUNCHPAD.load(deps.storage)?;
+    if launchpad != info.sender {
+        return Err(ContractError::NotLaunchpad);
     }
+
     let required_funds = query_denom_creation_fee(&deps.querier)?;
     if info.funds.len() > required_funds.len() {
         return Err(ContractError::SuperfluousFundsProvided);
@@ -32,6 +37,6 @@ pub fn handle_register_msg(
         }
     }
 
-    let create_denom_msg = register_contract_and_get_message(deps, &env, &addr)?;
+    let create_denom_msg = get_create_denom_message(deps, &env, &addr)?;
     Ok(Response::new().add_message(create_denom_msg))
 }

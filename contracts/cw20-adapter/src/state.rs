@@ -1,3 +1,4 @@
-use cw_item_set::Set;
+use cosmwasm_std::Addr;
+use cw_storage_plus::Item;
 
-pub const CW20_CONTRACTS: Set<&str> = Set::new("contracts", "contracts__counter");
+pub const LAUNCHPAD: Item<Addr> = Item::new("avida-launchpad");

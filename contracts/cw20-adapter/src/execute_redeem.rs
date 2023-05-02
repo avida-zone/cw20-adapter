@@ -1,10 +1,9 @@
-use cosmwasm_std::{to_binary, Binary, DepsMut, Env, MessageInfo, Response, WasmMsg};
+use cosmwasm_std::{to_binary, Addr, Binary, DepsMut, Env, MessageInfo, Response, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 use injective_cosmwasm::{create_burn_tokens_msg, InjectiveMsgWrapper, InjectiveQueryWrapper};
 
-use crate::common::{AdapterCoin, AdapterDenom};
+use crate::common::{is_contract_registered, AdapterCoin, AdapterDenom};
 use crate::error::ContractError;
-use crate::state::CW20_CONTRACTS;
 
 pub fn handle_redeem_msg(
     deps: DepsMut<InjectiveQueryWrapper>,
@@ -35,11 +34,8 @@ pub fn handle_redeem_msg(
         .ok_or(ContractError::NoRegisteredTokensProvided)?;
 
     let cw20_addr = tokens_to_exchange.denom.cw20_addr.clone();
-    // let cw20_addr = get_cw20_address_from_denom(&denom_parser, &tokens_to_exchange.denom).ok_or(ContractError::NoRegisteredTokensProvided)?;
-    let is_contract_registered = CW20_CONTRACTS.contains(deps.storage, &tokens_to_exchange.denom.cw20_addr);
-    if !is_contract_registered {
-        return Err(ContractError::NoRegisteredTokensProvided);
-    }
+    // This is derived from what we added
+    is_contract_registered(&deps, Addr::unchecked(tokens_to_exchange.denom.cw20_addr))?;
 
     let burn_tf_tokens_message = create_burn_tokens_msg(env.contract.address, tokens_to_exchange.as_coin());
 

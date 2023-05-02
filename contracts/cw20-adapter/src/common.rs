@@ -5,7 +5,9 @@ use injective_cosmwasm::{create_new_denom_msg, InjectiveMsgWrapper, InjectiveQue
 use serde::{Deserialize, Serialize};
 
 use crate::error::ContractError;
-use crate::state::CW20_CONTRACTS;
+use crate::state::LAUNCHPAD;
+
+use avida_verifier::state::launchpad::{RG_CONTRACTS, RG_TRANSFORM};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AdapterDenom {
@@ -94,8 +96,15 @@ pub fn ensure_address_is_cw20(deps: &DepsMut<InjectiveQueryWrapper>, addr: &str)
     }
 }
 
-pub fn is_contract_registered(deps: &DepsMut<InjectiveQueryWrapper>, addr: &Addr) -> bool {
-    CW20_CONTRACTS.contains(deps.storage, addr.as_ref())
+pub fn is_contract_registered(deps: &DepsMut<InjectiveQueryWrapper>, addr: Addr) -> Result<(), ContractError> {
+    let launchpad = LAUNCHPAD.load(deps.storage)?;
+    let new_rg = RG_CONTRACTS.query(&deps.querier, launchpad, addr)?;
+    let transform_rg = RG_TRANSFORM.query(&deps.querier, launchpad, addr)?;
+    if new_rg.is_none() && transform_rg.is_none() {
+        Err(ContractError::ContractNotRegistered)
+    } else {
+        Ok(())
+    }
 }
 
 pub fn ensure_sufficient_create_denom_balance(deps: &DepsMut<InjectiveQueryWrapper>, env: &Env) -> Result<(), ContractError> {
@@ -110,14 +119,13 @@ pub fn ensure_sufficient_create_denom_balance(deps: &DepsMut<InjectiveQueryWrapp
     Ok(())
 }
 
-pub fn register_contract_and_get_message(
+pub fn get_create_denom_message(
     deps: DepsMut<InjectiveQueryWrapper>,
     env: &Env,
     addr: &Addr,
 ) -> Result<CosmosMsg<InjectiveMsgWrapper>, ContractError> {
     let contract_address = addr.to_string();
     ensure_address_is_cw20(&deps, &contract_address)?;
-    CW20_CONTRACTS.insert(deps.storage, &contract_address)?;
     let create_denom_message = create_new_denom_msg(env.contract.address.to_string(), contract_address);
 
     Ok(create_denom_message)

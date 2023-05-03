@@ -96,10 +96,10 @@ pub fn ensure_address_is_cw20(deps: &DepsMut<InjectiveQueryWrapper>, addr: &str)
     }
 }
 
-pub fn is_contract_registered(deps: &DepsMut<InjectiveQueryWrapper>, addr: Addr) -> Result<(), ContractError> {
+pub fn is_contract_registered(deps: &DepsMut<InjectiveQueryWrapper>, addr: &Addr) -> Result<(), ContractError> {
     let launchpad = LAUNCHPAD.load(deps.storage)?;
-    let new_rg = RG_CONTRACTS.query(&deps.querier, launchpad, addr)?;
-    let transform_rg = RG_TRANSFORM.query(&deps.querier, launchpad, addr)?;
+    let new_rg = RG_CONTRACTS.query(&deps.querier, launchpad.clone(), addr.clone())?;
+    let transform_rg = RG_TRANSFORM.query(&deps.querier, launchpad, addr.clone())?;
     if new_rg.is_none() && transform_rg.is_none() {
         Err(ContractError::ContractNotRegistered)
     } else {

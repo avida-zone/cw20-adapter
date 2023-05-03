@@ -1,5 +1,5 @@
-use cosmwasm_std::{to_binary, Addr, Binary, DepsMut, Env, MessageInfo, Response, WasmMsg};
-use cw20::Cw20ExecuteMsg;
+use avida_verifier::msg::rg_cw20::ExecuteMsg as RgExecMsg;
+use cosmwasm_std::{to_binary, Addr, DepsMut, Env, MessageInfo, Response, WasmMsg};
 use injective_cosmwasm::{create_burn_tokens_msg, InjectiveMsgWrapper, InjectiveQueryWrapper};
 
 use crate::common::{is_contract_registered, AdapterCoin, AdapterDenom};
@@ -10,9 +10,11 @@ pub fn handle_redeem_msg(
     env: Env,
     info: MessageInfo,
     recipient: Option<String>,
-    submessage: Option<Binary>,
 ) -> Result<Response<InjectiveMsgWrapper>, ContractError> {
-    let recipient = recipient.unwrap_or_else(|| info.sender.to_string());
+    let valid_recipient = recipient
+        .map(|r| -> Result<Addr, _> { deps.api.addr_validate(&r) })
+        .transpose()?
+        .unwrap_or_else(|| info.sender.clone());
 
     if info.funds.len() > 1 {
         return Err(ContractError::SuperfluousFundsProvided);
@@ -34,29 +36,20 @@ pub fn handle_redeem_msg(
         .ok_or(ContractError::NoRegisteredTokensProvided)?;
 
     let cw20_addr = tokens_to_exchange.denom.cw20_addr.clone();
-    // This is derived from what we added
-    is_contract_registered(&deps, Addr::unchecked(tokens_to_exchange.denom.cw20_addr))?;
-
     let burn_tf_tokens_message = create_burn_tokens_msg(env.contract.address, tokens_to_exchange.as_coin());
 
-    let cw20_message: WasmMsg = match submessage {
-        None => WasmMsg::Execute {
-            contract_addr: cw20_addr,
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                recipient,
-                amount: tokens_to_exchange.amount,
-            })?,
-            funds: vec![],
-        },
-        Some(msg) => WasmMsg::Execute {
-            contract_addr: cw20_addr,
-            msg: to_binary(&Cw20ExecuteMsg::Send {
-                contract: recipient,
-                amount: tokens_to_exchange.amount,
-                msg,
-            })?,
-            funds: vec![],
-        },
+    // This is derived from what we added
+    is_contract_registered(&deps, &Addr::unchecked(tokens_to_exchange.denom.cw20_addr))?;
+
+    let adaptor_transfer_msg = WasmMsg::Execute {
+        contract_addr: cw20_addr,
+        msg: to_binary(&RgExecMsg::AdaptorTransfer {
+            sender: info.sender,
+            recipient: valid_recipient,
+            amount: tokens_to_exchange.amount,
+        })?,
+        funds: vec![],
     };
-    Ok(Response::new().add_message(cw20_message).add_message(burn_tf_tokens_message))
+
+    Ok(Response::new().add_message(adaptor_transfer_msg).add_message(burn_tf_tokens_message))
 }

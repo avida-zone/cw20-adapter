@@ -1,4 +1,4 @@
-use crate::common::{get_create_denom_message, is_contract_registered, query_denom_creation_fee};
+use crate::common::{get_create_denom_message, query_denom_creation_fee};
 use crate::error::ContractError;
 use crate::state::LAUNCHPAD;
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response};
@@ -11,8 +11,6 @@ pub fn handle_register_msg(
     info: MessageInfo,
     addr: Addr,
 ) -> Result<Response<InjectiveMsgWrapper>, ContractError> {
-    is_contract_registered(&deps, addr)?;
-
     let launchpad = LAUNCHPAD.load(deps.storage)?;
     if launchpad != info.sender {
         return Err(ContractError::NotLaunchpad);

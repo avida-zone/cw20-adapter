@@ -42,7 +42,6 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 [[package]]
 name = "avida-verifier"
 version = "0.1.0"
-source = "git+https://github.com/avida-zone/cw-contracts-hackathon23?rev=849f85c#849f85c54a1fb4fa433ff2ddcba68f15f6e73256"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

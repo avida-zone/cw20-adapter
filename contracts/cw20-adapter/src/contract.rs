@@ -29,8 +29,7 @@ pub fn execute(
 ) -> Result<Response<InjectiveMsgWrapper>, ContractError> {
     match msg {
         ExecuteMsg::Receive { sender, amount, msg: _ } => execute_receive::handle_on_received_cw20_funds_msg(deps, env, info, sender, amount),
-        ExecuteMsg::RedeemAndTransfer { recipient } => execute_redeem::handle_redeem_msg(deps, env, info, recipient, None),
-        ExecuteMsg::RedeemAndSend { recipient, submsg } => execute_redeem::handle_redeem_msg(deps, env, info, Some(recipient), Some(submsg)),
+        ExecuteMsg::RedeemAndTransfer { recipient } => execute_redeem::handle_redeem_msg(deps, env, info, recipient),
         ExecuteMsg::UpdateMetadata { addr } => execute_metadata::handle_update_metadata(deps, env, addr),
         ExecuteMsg::RegisterRG { addr } => execute_register::handle_register_msg(deps, env, info, addr),
     }

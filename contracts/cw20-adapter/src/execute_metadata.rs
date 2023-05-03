@@ -10,7 +10,7 @@ pub fn handle_update_metadata(
     env: Env,
     cw20_addr: Addr,
 ) -> Result<Response<InjectiveMsgWrapper>, ContractError> {
-    is_contract_registered(&deps, cw20_addr)?;
+    is_contract_registered(&deps, &cw20_addr)?;
     let token_metadata = fetch_cw20_metadata(&deps, cw20_addr.as_str())?;
 
     let denom = get_denom(&env.contract.address, &cw20_addr);

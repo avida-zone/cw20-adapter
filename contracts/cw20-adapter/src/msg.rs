@@ -1,5 +1,5 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Binary, Uint128};
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::{Addr, Binary, Coin, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -27,7 +27,9 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Returns a fee required to register a new token-factory denom
+    #[returns(Vec<Coin>)]
     NewDenomFee {},
 }

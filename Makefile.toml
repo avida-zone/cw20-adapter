@@ -57,7 +57,7 @@ rm -rf schemas
 mkdir schemas
 
 contracts=(
-  steak-hub
+  cw20-adapter 
 )
 
 for contract in ${contracts[@]}; do

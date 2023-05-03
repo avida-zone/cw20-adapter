@@ -43,7 +43,7 @@ pub fn handle_redeem_msg(
 
     let adaptor_transfer_msg = WasmMsg::Execute {
         contract_addr: cw20_addr,
-        msg: to_binary(&RgExecMsg::AdaptorTransfer {
+        msg: to_binary(&RgExecMsg::AdapterTransfer {
             sender: info.sender,
             recipient: valid_recipient,
             amount: tokens_to_exchange.amount,

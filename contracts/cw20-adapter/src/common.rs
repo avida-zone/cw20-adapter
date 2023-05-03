@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Coin, CosmosMsg, DepsMut, Env, QuerierWrapper, StdResult, Uint128};
-use cw20::{Cw20QueryMsg, TokenInfoResponse};
+use cw20::Cw20QueryMsg;
 
 use injective_cosmwasm::{create_new_denom_msg, InjectiveMsgWrapper, InjectiveQuerier, InjectiveQueryWrapper};
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 use crate::error::ContractError;
 use crate::state::LAUNCHPAD;
 
-use avida_verifier::state::launchpad::{RG_CONTRACTS, RG_TRANSFORM};
+use avida_verifier::{
+    msg::rg_cw20::TokenInfoResponse,
+    state::launchpad::{RG_CONTRACTS, RG_TRANSFORM},
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AdapterDenom {
@@ -89,6 +92,7 @@ pub fn fetch_cw20_metadata(deps: &DepsMut<InjectiveQueryWrapper>, addr: &str) ->
 
 pub fn ensure_address_is_cw20(deps: &DepsMut<InjectiveQueryWrapper>, addr: &str) -> Result<(), ContractError> {
     let msg = Cw20QueryMsg::TokenInfo {};
+    // We replaced this with the RG version with the verifier address
     let res: StdResult<TokenInfoResponse> = deps.querier.query_wasm_smart(addr, &msg);
     match res {
         Ok(_) => Ok(()),

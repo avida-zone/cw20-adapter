@@ -3,13 +3,13 @@ use cosmwasm_std::{
     Addr, Coin, CosmosMsg, SubMsg,
 };
 
-use cw20_adapter::{error::ContractError, execute_register::handle_register_msg, state::CW20_CONTRACTS};
+use cw20_adapter::{error::ContractError, execute_register::handle_register_msg};
 use injective_cosmwasm::{mock_dependencies, InjectiveMsg, InjectiveMsgWrapper, InjectiveRoute, WasmMockQuerier};
 
 use common::{create_cw20_failing_info_query_handler, create_cw20_info_query_handler, create_denom_creation_fee_failing_handler};
 
 use crate::common::{CONTRACT_ADDRESS, CW_20_ADDRESS, SENDER};
-
+use avida_verifier::state::launchpad::{LaunchpadOptions, RG_CONTRACTS};
 mod common;
 
 // const CONTRACT_ADDRESS: &str = "inj1pvrwmjuusn9wh34j7y520g8gumuy9xtlt6xtzw";
@@ -24,6 +24,16 @@ fn it_handles_correct_register_msg_with_exact_funds() {
         ..Default::default()
     };
 
+    RG_CONTRACTS
+        .save(
+            &mut deps.storage,
+            Addr::unchecked(CW_20_ADDRESS),
+            &LaunchpadOptions {
+                launch_type: avida_verifier::state::launchpad::LaunchType::Transform("type".into()),
+                originator: Addr::unchecked("mock"),
+            },
+        )
+        .unwrap();
     let mut env = mock_env();
     env.contract.address = Addr::unchecked(CONTRACT_ADDRESS);
     let response = handle_register_msg(
@@ -33,9 +43,6 @@ fn it_handles_correct_register_msg_with_exact_funds() {
         Addr::unchecked(CW_20_ADDRESS),
     )
     .unwrap();
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, CW_20_ADDRESS);
-    assert!(contract_registered, "contract wasn't registered");
 
     assert_eq!(response.messages.len(), 1, "incorrect number of messages returned");
 
@@ -72,45 +79,6 @@ fn it_handles_correct_register_msg_with_extra_funds() {
 }
 
 #[test]
-fn it_handles_correct_register_msg_with_non_cannonical_cw20_address() {
-    let mut deps = mock_dependencies();
-    deps.querier = WasmMockQuerier {
-        smart_query_handler: create_cw20_failing_info_query_handler(),
-        ..Default::default()
-    };
-
-    let non_cannonical_address = "stefan";
-    let response = handle_register_msg(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(SENDER, &[Coin::new(10, "inj")]),
-        Addr::unchecked(non_cannonical_address.to_string()),
-    )
-    .unwrap_err();
-
-    assert_eq!(ContractError::NotCw20Address, response, "should fail with wrong cw-20 address");
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, non_cannonical_address);
-    assert!(!contract_registered, "contract was registered");
-}
-
-#[test]
-fn it_returns_error_if_already_registered_register_msg() {
-    let mut deps = mock_dependencies();
-    let storage = &mut deps.storage;
-    let contract_address = Addr::unchecked("amazing_address");
-    CW20_CONTRACTS.insert(storage, contract_address.as_str()).unwrap();
-
-    let response = handle_register_msg(deps.as_mut(), mock_env(), mock_info("sender", &[]), contract_address);
-
-    assert_eq!(
-        response.unwrap_err(),
-        ContractError::ContractAlreadyRegistered,
-        "incorrect error returned"
-    )
-}
-
-#[test]
 fn it_returns_error_if_cannot_query_denom_creation_fee_register_msg() {
     let mut deps = mock_dependencies();
     deps.querier = WasmMockQuerier {
@@ -127,9 +95,6 @@ fn it_returns_error_if_cannot_query_denom_creation_fee_register_msg() {
     .unwrap_err();
 
     assert!(response.to_string().contains("custom error"), "incorrect error returned");
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, CW_20_ADDRESS);
-    assert!(!contract_registered, "contract was registered");
 }
 
 #[test]
@@ -144,9 +109,6 @@ fn it_returns_error_if_mismatched_denom_is_passed_register_msg() {
     .unwrap_err();
 
     assert_eq!(response, ContractError::NotEnoughBalanceToPayDenomCreationFee, "incorrect error returned");
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, CW_20_ADDRESS);
-    assert!(!contract_registered, "contract was registered");
 }
 
 #[test]
@@ -162,9 +124,6 @@ fn it_returns_error_if_insufficient_coins_are_passed_register_msg() {
     .unwrap_err();
 
     assert_eq!(response, ContractError::NotEnoughBalanceToPayDenomCreationFee, "incorrect error returned");
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, CW_20_ADDRESS);
-    assert!(!contract_registered, "contract was registered");
 }
 
 #[test]
@@ -173,9 +132,6 @@ fn it_returns_error_if_no_coins_are_passed_register_msg() {
     let response = handle_register_msg(deps.as_mut(), mock_env(), mock_info(SENDER, &[]), Addr::unchecked(CW_20_ADDRESS)).unwrap_err();
 
     assert_eq!(response, ContractError::NotEnoughBalanceToPayDenomCreationFee, "incorrect error returned");
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, CW_20_ADDRESS);
-    assert!(!contract_registered, "contract was registered");
 }
 
 #[test]
@@ -195,7 +151,4 @@ fn it_returns_error_if_register_is_not_cw20_msg() {
     .unwrap_err();
 
     assert_eq!(response, ContractError::NotCw20Address, "incorrect error returned");
-
-    let contract_registered = CW20_CONTRACTS.contains(&deps.storage, CW_20_ADDRESS);
-    assert!(!contract_registered, "contract was registered");
 }

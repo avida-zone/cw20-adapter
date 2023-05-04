@@ -24,7 +24,9 @@ fn it_can_perform_basic_operations() {
     wasm_querier.smart_query_handler = create_cw20_info_query_handler();
     deps.querier = wasm_querier;
 
-    let msg = InstantiateMsg {};
+    let msg = InstantiateMsg {
+        launchpad: "launchpad".to_string(),
+    };
 
     let info_inst = mock_info(ADMIN, &[]);
     let _res_inst = instantiate(deps.as_mut(), mock_env(ADAPTER_CONTRACT), info_inst, msg).unwrap();

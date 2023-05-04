@@ -5,7 +5,6 @@ use cosmwasm_std::{Addr, CosmosMsg, SubMsg};
 use cw20_adapter::common::get_denom;
 use cw20_adapter::error::ContractError;
 use cw20_adapter::execute_metadata::handle_update_metadata;
-use cw20_adapter::state::CW20_CONTRACTS;
 use injective_cosmwasm::{mock_dependencies, InjectiveMsg, InjectiveMsgWrapper, InjectiveRoute, WasmMockQuerier};
 
 use crate::common::{create_cw20_info_query_handler, CONTRACT_ADDRESS, CW_20_ADDRESS};
@@ -19,7 +18,6 @@ fn it_updates_metadata() {
     };
     let mut env = mock_env();
     env.contract.address = Addr::unchecked(CONTRACT_ADDRESS);
-    CW20_CONTRACTS.insert(&mut deps.storage, CW_20_ADDRESS).unwrap();
 
     let response = handle_update_metadata(deps.as_mut(), env, Addr::unchecked(CW_20_ADDRESS)).unwrap();
     assert_eq!(response.messages.len(), 1, "incorrect number of messages returned");

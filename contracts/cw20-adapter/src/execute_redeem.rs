@@ -27,11 +27,6 @@ pub fn handle_redeem_msg(
                 Ok(denom) => Some(AdapterCoin { amount: c.amount, denom }),
                 Err(_) => None,
             }
-            // if denom_parser.is_match(&c.denom) {
-            //     Some(c.clone())
-            // } else {
-            //     None
-            // }
         })
         .ok_or(ContractError::NoRegisteredTokensProvided)?;
 

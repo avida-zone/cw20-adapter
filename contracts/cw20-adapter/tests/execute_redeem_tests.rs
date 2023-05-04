@@ -1,11 +1,9 @@
 use avida_verifier::msg::rg_cw20::ExecuteMsg as RgExecMsg;
-use avida_verifier::state::launchpad::{LaunchpadOptions, RG_CONTRACTS};
 use cosmwasm_std::{
     from_binary,
     testing::{mock_env, mock_info},
     Addr, Coin, CosmosMsg, SubMsg, WasmMsg,
 };
-use cw20::Cw20ExecuteMsg;
 use cw20_adapter::{error::ContractError, execute_redeem::handle_redeem_msg};
 use injective_cosmwasm::{mock_dependencies, InjectiveMsg, InjectiveMsgWrapper, InjectiveRoute};
 
@@ -18,25 +16,8 @@ fn it_handles_redeem_and_transfer_correctly() {
     let mut deps = mock_dependencies();
     let mut env = mock_env();
     env.contract.address = Addr::unchecked(CONTRACT_ADDRESS);
-    RG_CONTRACTS
-        .save(
-            &mut deps.storage,
-            Addr::unchecked(CW_20_ADDRESS),
-            &LaunchpadOptions {
-                launch_type: avida_verifier::state::launchpad::LaunchType::Transform("type".into()),
-                originator: Addr::unchecked("mock"),
-            },
-        )
-        .unwrap();
-
     let coins_to_burn = Coin::new(10, format!("factory/{}/{}", CONTRACT_ADDRESS, CW_20_ADDRESS));
-    let response = handle_redeem_msg(
-        deps.as_mut(),
-        env,
-        mock_info(CW_20_ADDRESS, &[coins_to_burn.clone()]),
-        Some(SENDER.to_string()),
-    )
-    .unwrap();
+    let response = handle_redeem_msg(deps.as_mut(), env, mock_info(CW_20_ADDRESS, &[coins_to_burn.clone()]), None).unwrap();
 
     assert_eq!(response.messages.len(), 2, "incorrect number of messages returned");
 

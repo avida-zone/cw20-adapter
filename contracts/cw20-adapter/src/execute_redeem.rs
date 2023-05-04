@@ -31,7 +31,7 @@ pub fn handle_redeem_msg(
         .ok_or(ContractError::NoRegisteredTokensProvided)?;
 
     let cw20_addr = tokens_to_exchange.denom.cw20_addr.clone();
-    let burn_tf_tokens_message = create_burn_tokens_msg(env.contract.address, tokens_to_exchange.as_coin());
+    let burn_tf_tokens_message = create_burn_tokens_msg(env.contract.address.clone(), tokens_to_exchange.as_coin());
 
     // This is derived from what we added
     is_contract_registered(&deps, &Addr::unchecked(tokens_to_exchange.denom.cw20_addr))?;
@@ -39,7 +39,8 @@ pub fn handle_redeem_msg(
     let adaptor_transfer_msg = WasmMsg::Execute {
         contract_addr: cw20_addr,
         msg: to_binary(&RgExecMsg::AdapterTransfer {
-            sender: info.sender,
+            // unlock token from this contract
+            sender: env.contract.address,
             recipient: valid_recipient,
             amount: tokens_to_exchange.amount,
         })?,
